@@ -138,3 +138,21 @@ class TaskTests(APITestCase):
         task.refresh_from_db()
 
         self.assertTrue(task.completed)
+
+    def test_tasks_are_paginated(self):
+        self.client.force_authenticate(user=self.user)
+
+        for i in range(12):
+            Task.objects.create(
+                title=f"Task {i}",
+                description="Test task",
+                owner=self.user,
+            )
+
+        response = self.client.get("/api/tasks/")
+
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(response.data["count"], 12)
+        self.assertEqual(len(response.data["results"]), 10)
+        self.assertIsNotNone(response.data["next"])

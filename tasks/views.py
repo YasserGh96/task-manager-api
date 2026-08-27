@@ -13,8 +13,27 @@ class TaskViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Task.objects.filter(owner=self.request.user)
+        queryset = Task.objects.filter(owner=self.request.user)
 
+        completed = self.request.query_params.get("completed")
+
+        if completed == "true":
+            queryset = queryset.filter(completed=True)
+
+        elif completed == "false":
+            queryset = queryset.filter(completed=False)
+
+        search = self.request.query_params.get("search")
+
+        if search:
+            queryset = queryset.filter(
+                title__icontains=search
+            ) | queryset.filter(
+                description__icontains=search
+            )
+
+
+        return queryset
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
