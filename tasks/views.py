@@ -12,25 +12,31 @@ class TaskViewSet(ModelViewSet):
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
 
+    filterset_fields = ["completed"]
+    search_fields = ["title", "description"]
+    ordering_fields = ["created_at", "title", "completed"]
+
     def get_queryset(self):
         queryset = Task.objects.filter(owner=self.request.user)
+        # filterset_fields = ["completed"]
+        # search_fields = ["title", "description"]
+        # ordering_fields = ["created_at", "title", "completed"]
+        # completed = self.request.query_params.get("completed")
 
-        completed = self.request.query_params.get("completed")
+        # if completed == "true":
+        #     queryset = queryset.filter(completed=True)
 
-        if completed == "true":
-            queryset = queryset.filter(completed=True)
+        # elif completed == "false":
+        #     queryset = queryset.filter(completed=False)
 
-        elif completed == "false":
-            queryset = queryset.filter(completed=False)
+        # search = self.request.query_params.get("search")
 
-        search = self.request.query_params.get("search")
-
-        if search:
-            queryset = queryset.filter(
-                title__icontains=search
-            ) | queryset.filter(
-                description__icontains=search
-            )
+        # if search:
+        #     queryset = queryset.filter(
+        #         title__icontains=search
+        #     ) | queryset.filter(
+        #         description__icontains=search
+        #     )
 
 
         return queryset
