@@ -1,51 +1,44 @@
 # Task Manager API
 
-A production-style RESTful Task Management API built with **Django** and **Django REST Framework**.
+A production-style REST API built with Django and Django REST Framework.
 
-The project is being developed as a complete backend application with authentication, authorization, task management, filtering, searching, pagination, automated testing, and eventually PostgreSQL, Docker, CI/CD, and a SwiftUI client.
+The project provides user authentication, secure task ownership, CRUD operations, filtering, search, ordering, pagination, and automated testing.
 
 ## Features
 
 ### Authentication
 
 * User registration
-* JWT authentication
-* Login and token refresh
+* JWT login
+* JWT token refresh
+* Password hashing
 * Protected API endpoints
-* User-specific data access
 
 ### Task Management
 
 * Create tasks
-* Retrieve tasks
+* View tasks
 * Update tasks
 * Delete tasks
 * Mark tasks as completed
-* User-owned tasks
+* Users can only access their own tasks
 
-### API Features
+### Querying
 
+* Filter tasks by completion status
+* Search tasks by title and description
+* Order tasks by different fields
 * Pagination
-* Filtering by completion status
-* Search by title and description
-* User-based querysets
-* Permission-based access control
 
 ### Testing
 
-The project includes automated tests covering:
-
-* User registration
-* Password hashing
-* User login
-* Invalid login credentials
-* Task creation
-* Authentication requirements
-* Task ownership
-* Task updates
-* Task deletion
-* Completing tasks
-* Pagination
+* Automated API tests using Django REST Framework
+* Authentication tests
+* Permission and ownership tests
+* CRUD tests
+* Filtering, search, and ordering tests
+* Pagination tests
+* **14 tests currently passing**
 
 ## Tech Stack
 
@@ -53,6 +46,7 @@ The project includes automated tests covering:
 * Django
 * Django REST Framework
 * Simple JWT
+* django-filter
 * SQLite (development)
 * Git / GitHub
 
@@ -77,11 +71,11 @@ task-manager-api/
 │   ├── models.py
 │   ├── serializers.py
 │   ├── views.py
+│   ├── urls.py
 │   └── tests.py
 │
 ├── manage.py
 ├── requirements.txt
-├── .gitignore
 └── README.md
 ```
 
@@ -93,48 +87,29 @@ task-manager-api/
 | ------ | --------------------- | ---------------------------- |
 | POST   | `/api/auth/register/` | Register a new user          |
 | POST   | `/api/auth/login/`    | Login and receive JWT tokens |
-| POST   | `/api/auth/refresh/`  | Refresh an access token      |
+| POST   | `/api/auth/refresh/`  | Refresh access token         |
 
 ### Tasks
 
-| Method | Endpoint                    | Description                         |
-| ------ | --------------------------- | ----------------------------------- |
-| GET    | `/api/tasks/`               | List the authenticated user's tasks |
-| POST   | `/api/tasks/`               | Create a task                       |
-| GET    | `/api/tasks/<id>/`          | Retrieve a task                     |
-| PUT    | `/api/tasks/<id>/`          | Update a task                       |
-| PATCH  | `/api/tasks/<id>/`          | Partially update a task             |
-| DELETE | `/api/tasks/<id>/`          | Delete a task                       |
-| POST   | `/api/tasks/<id>/complete/` | Mark a task as completed            |
-
-## Authentication
-
-Protected endpoints require a JWT access token.
-
-Include the token in the request header:
-
-```text
-Authorization: Bearer <access_token>
-```
-
-Example:
-
-```text
-GET /api/tasks/
-Authorization: Bearer eyJ...
-```
+| Method | Endpoint                    | Description              |
+| ------ | --------------------------- | ------------------------ |
+| GET    | `/api/tasks/`               | List user's tasks        |
+| POST   | `/api/tasks/`               | Create a task            |
+| GET    | `/api/tasks/{id}/`          | Retrieve a task          |
+| PUT    | `/api/tasks/{id}/`          | Update a task            |
+| PATCH  | `/api/tasks/{id}/`          | Partially update a task  |
+| DELETE | `/api/tasks/{id}/`          | Delete a task            |
+| POST   | `/api/tasks/{id}/complete/` | Mark a task as completed |
 
 ## Filtering
 
-Tasks can be filtered by completion status.
-
-Completed tasks:
+Filter tasks by completion status:
 
 ```text
 GET /api/tasks/?completed=true
 ```
 
-Incomplete tasks:
+or:
 
 ```text
 GET /api/tasks/?completed=false
@@ -142,79 +117,98 @@ GET /api/tasks/?completed=false
 
 ## Search
 
-Search tasks by title or description:
+Search by task title or description:
 
 ```text
 GET /api/tasks/?search=django
 ```
 
-Search can also be combined with filtering:
+## Ordering
+
+Order tasks by title:
 
 ```text
-GET /api/tasks/?search=django&completed=true
+GET /api/tasks/?ordering=title
+```
+
+Newest tasks first:
+
+```text
+GET /api/tasks/?ordering=-created_at
+```
+
+Filtering, search, and ordering can also be combined:
+
+```text
+GET /api/tasks/?completed=false&search=django&ordering=title
 ```
 
 ## Pagination
 
-The API returns a maximum of 10 tasks per page.
+Tasks are paginated with a default page size of 5.
 
 ```text
 GET /api/tasks/
 ```
 
-A paginated response contains:
+Next pages can be accessed using:
+
+```text
+GET /api/tasks/?page=2
+```
+
+The API returns:
 
 ```json
 {
-    "count": 12,
+    "count": 10,
     "next": "...",
     "previous": null,
     "results": []
 }
 ```
 
-To request another page:
+## Authentication
+
+Task endpoints require authentication.
+
+Include the JWT access token in the request:
 
 ```text
-GET /api/tasks/?page=2
+Authorization: Bearer <access_token>
 ```
 
-## Local Development
+Users can only access and modify tasks that belong to them.
 
-### 1. Clone the repository
+## Running Locally
+
+Clone the repository and navigate into the project:
 
 ```bash
 git clone <repository-url>
 cd task-manager-api
 ```
 
-### 2. Create a virtual environment
-
-Windows:
+Create and activate a virtual environment:
 
 ```powershell
 python -m venv .venv
-```
-
-Activate it:
-
-```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 3. Install dependencies
+Install dependencies:
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-### 4. Run migrations
+Run migrations:
 
 ```powershell
 python manage.py migrate
 ```
 
-### 5. Start the development server
+Start the development server:
 
 ```powershell
 python manage.py runserver
@@ -234,62 +228,41 @@ Run the complete test suite:
 python manage.py test
 ```
 
-Run only user tests:
+Current status:
 
-```powershell
-python manage.py test users
-```
-
-Run only task tests:
-
-```powershell
-python manage.py test tasks
+```text
+14 tests passed
 ```
 
 ## Roadmap
 
-The project will continue to evolve toward a production-ready backend.
+Planned improvements include:
 
-### Completed
+* Advanced task filtering with custom FilterSets
+* Task priorities
+* Due dates
+* Categories
+* Better validation and error handling
+* Password change and password reset
+* JWT logout / token blacklisting
+* API documentation with OpenAPI / Swagger
+* PostgreSQL
+* Environment-based configuration
+* Docker
+* GitHub Actions CI
+* Production deployment
+* SwiftUI iOS client
 
-* [x] Django project setup
-* [x] Custom User model
-* [x] User registration
-* [x] JWT authentication
-* [x] Task CRUD
-* [x] User task ownership
-* [x] Task completion endpoint
-* [x] Pagination
-* [x] Task filtering
-* [x] Task search
-* [x] Automated tests
+## Goal
 
-### Planned
+The goal of this project is to build a complete, production-style Django REST API while following professional development practices such as:
 
-* [ ] Advanced filtering with `django-filter`
-* [ ] Ordering and sorting
-* [ ] Better validation and error handling
-* [ ] Password change/reset
-* [ ] Token blacklisting/logout
-* [ ] API documentation
-* [ ] PostgreSQL
-* [ ] Environment-based configuration
-* [ ] Docker
-* [ ] GitHub Actions CI
-* [ ] Production deployment
-* [ ] SwiftUI iOS client
-
-## Project Goal
-
-The goal of this project is to build a complete, production-style backend while following real-world development practices such as:
-
-* REST API design
+* Clean architecture
 * Authentication and authorization
-* Database design
 * Automated testing
-* Git version control
-* Continuous integration
+* API design
+* Database design
+* Documentation
+* CI/CD
 * Containerization
 * Production deployment
-
-Eventually, the API will be consumed by a native **SwiftUI iOS application**.
